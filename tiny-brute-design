@@ -1,0 +1,35 @@
+Tiny Brute static site generator - design
+
+Design requirements:
+ - pure html templates - no other templating language
+ - No content information collected or understood by Tiny Brute, e.g. it knows nothing about published dates. All the content knowledge is in the client code.
+
+Process:
+Tiny Brute recursively scans the input directory.
+When a file that corresponds to a static web-page is found
+ - the file is parsed as YAML
+ - a template is selected as indicated in the YAML
+ - content from the page content is injected into the template
+ - any global-content-injectors that apply to that page are executed
+ - the generated html page is copied to the same relative location in the output directory
+When a file that does not correspond to a static web-page is found
+ - the file is copied directly to the same relative location in the output directory
+Fin
+
+Static web pages:
+The default extension for files that correspond to a static web-page is .page.brute
+The client can define a different extension.
+Example file...
+
+# When defined with a relative path like this, the path is assumed to be relative to the PROJECT_DIRECTORY
+template = blog-post.html
+
+# Anything other than the template is assumed to be a content-injection definition
+[main-image]
+path = 'body #main-image'
+content = '''
+main-content = """
+This is the best blog post I've ever written.
+If I knew it was going to be this good, I would have started a blog to put it in 
+
+
