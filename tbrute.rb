@@ -58,10 +58,9 @@ if ( ARGV.length > 1 )
 elsif ( ARGV.length == 1 )
   # Does the argument look like an absolute path?
   if "/\\".include?( ARGV[0][0] )
-    # Making a copy because the strings in ARGV are frozen.
-    project_dir = ARGV[0].dup
+    project_dir = ARGV[0]
   else
-    project_dir += '/' + ARGV[0]
+    project_dir = File.join( project_dir, ARGV[0] )
   end
 end
 
@@ -72,18 +71,15 @@ logger.info("Generating static site from project at " + project_dir)
 # Load config
 #
 
-# Remove trailing slashes before concatenating with relative paths of subdirectories
-project_dir.chomp!( '/' )
-
-# Default config
+# Define default config
 config = {
   project_dir: project_dir,
-  input_dir: project_dir + '/input',
-  global_injectors_dir: project_dir + '/globals',
+  input_dir: File.join( project_dir, 'input' ),
+  global_injectors_dir: File.join( project_dir, 'globals' ),
 
-  # Using microseconds rather than seconds in the output dir name,
-  # just in case this script is run more than once in the same second.
-  output_dir: project_dir + '/' + Time.now.strftime('%Y-%m-%d--%H-%M--%N')
+  # Including microseconds in the output dir name in case this script is run
+  # more than once in the same second.
+  output_dir: File.join( project_dir, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
 }
 
 # TO DO: load any config overrides from TOML file
