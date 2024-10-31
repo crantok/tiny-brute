@@ -26,3 +26,16 @@ Fin
 Static web pages:
 The default extension for files that correspond to a static web-page is .page.brute
 I might implement configuration for this.
+
+
+
+Output directories:
+Random idea...
+ - generating the site creates a new, probably-uniquely-named, output folder 
+ - unique output directory names allow easy rollback
+ - drawback: small, incremental changes between generations create many output folders
+
+How about two modes?
+ - "Generate" overwrites the "draft" folder
+ - "Publish" creates a new folder
+
