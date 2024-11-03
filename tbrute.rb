@@ -5,9 +5,6 @@ require 'logger'
 
 # APP_NAME = "Tiny Brute"
 
-# Default project directory is the current working directory
-project_dir = Dir.pwd
-
 
 ############################
 # Initialise logging
@@ -29,14 +26,15 @@ OptionParser.new do |parser|
   # triggered by -h or --help
   parser.banner = "Usage: tbrute.rb [PROJECT_DIRECTORY]
 arguments:
-    PROJECT_DIRECTORY  directory containing the configuration file for the
-                       relevant project
+    PROJECT_DIRECTORY  root directory of the project
                        default = curent working directory (usually the
-                       directory that this script was called from)"
+                       directory that this script was called from)
+                       Project config file (if any) should be placed here."
 
   # The second argument passed to OptionParser#on is parsed to determine
   # whether there is a required or [optional] argument.
   # Not the most self-documenting interface.
+  # Example:
   # parser.on( "-t", "--test [OPTIONAL_ARG]", "testing the options parser") do |t|
   #   options[:test] = t
   # end
@@ -48,7 +46,7 @@ end.parse!
 
 
 ###########################
-# Process postional command line arguments
+# Process postional command line arguments: project_dir
 #
 # Allow override of project directory via command line argument.
 
@@ -56,12 +54,9 @@ if ( ARGV.length > 1 )
   logger.error( "Too many arguments. Expected PROJECT_DIRECTORY or nothing." )
   abort()
 elsif ( ARGV.length == 1 )
-  # Does the argument look like an absolute path?
-  if "/\\".include?( ARGV[0][0] )
-    project_dir = ARGV[0]
-  else
-    project_dir = File.join( project_dir, ARGV[0] )
-  end
+  project_dir = File.expand_path( ARGV[0] )
+else
+  project_dir = Dir.pwd  # default: current working directory 
 end
 
 logger.info("Generating static site from project at " + project_dir)

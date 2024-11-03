@@ -6,6 +6,9 @@ Design requirements:
  - No content information collected or understood by Tiny Brute, e.g. it knows nothing about published dates. All the content knowledge is in the client code, i.e. the global injectors.
 
 
+TO DO: Design a Ruby (or golang) plugin architectire.
+
+
 Process:
 
 Tiny Brute recursively scans the input directory.
@@ -31,11 +34,11 @@ I might implement configuration for this.
 
 Output directories:
 Random idea...
- - generating the site creates a new, probably-uniquely-named, output folder 
- - unique output directory names allow easy rollback
- - drawback: small, incremental changes between generations create many output folders
-
-How about two modes?
- - "Generate" overwrites the "draft" folder
- - "Publish" creates a new folder
-
+ - Command "generate"/"gen" generates the site in the Work In Progress (wip) directory
+ - Command "clean-and-generate"/"clgen" deletes the contents of wip and then generates.
+ - Command "publish"/"pub" generates the site in a new, probably-uniquely-named, directory
+Intention:
+ - This allows an obscure domain name to be pointed at the wip folder.
+ - Edits are reflected in this version of the site while developing content.
+ - A symlink for the live site can be pointed at the latest published content.
+ - Having every published version in its own directory means that rolling back should be easy.
