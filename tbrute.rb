@@ -63,10 +63,9 @@ logger.info("Generating static site from project at " + project_dir)
 
 
 ############################
-# Load config
+# Define default config
 #
 
-# Define default config
 config = {
   project_dir: project_dir,
   input_dir: File.join( project_dir, 'input' ),
@@ -77,10 +76,15 @@ config = {
   output_dir: File.join( project_dir, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
 }
 
-# TO DO: load any config overrides from TOML file
-# TO DO: load any config overrides from TOML file
-# TO DO: load any config overrides from TOML file
-# TO DO: load any config overrides from TOML file
+
+
+##########################
+# Optional - To Do: Load any config overrides from TOML file
+#
+# Note: We won't override the project directory via config file but we can
+# override any other paths.
+#
+
 
 logger.info("Loaded config: \n" + config.to_s)
 
@@ -89,10 +93,24 @@ logger.info("Loaded config: \n" + config.to_s)
 # Initialise global injectors
 #
 
+# 1) define class Plugins
+# 2) require all ruby files in the global_injectors_dir
+# 3) on require, each ruby file should automatically register its plugin(s)
+# 
+# 4) (Optional idea) Each plugin defines which page_data keys it wants and it
+#    can only receive those keys. That increases the liklihood of the plugin
+#    code listing all the keys it uses in one place. (Although it might list
+#    keys that the code no longer uses.)
 
 
 ##########################
 # Generate output from the input directory
 #
-
+# process the input directory:
+#     for each static page
+#         for each plugin
+#             call inject_markup( page_data, page_markup ) => page_markup
+#         end
+#     end
+#     save final page_markup to output directory
 
