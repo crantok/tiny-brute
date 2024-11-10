@@ -124,7 +124,7 @@ end
 #    keys that the code no longer uses.)
 
 # TEST:
-#puts Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" )
+logger.debug( "Testing sample plugin... (This will probably break if the sample plugin is changed or removed.)" )
 logger.debug( Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
 
 
