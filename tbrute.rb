@@ -10,7 +10,7 @@ require 'logger'
 # Initialise logging
 #
 logger = Logger.new(STDERR)
-logger.level = Logger::INFO
+logger.level = Logger::DEBUG
 
 
 ##########################
@@ -93,14 +93,39 @@ logger.info("Loaded config: \n" + config.to_s)
 # Initialise global injectors
 #
 
-# 1) define class Plugins
+# 1) define class a plugin manager
+
+class Plugins
+  @@plugins = []
+  def self.register( plugin )
+    @@plugins << plugin
+  end
+  def self.inflate_page( page_data, page_markup )
+    @@plugins.each do |p|
+      page_markup = p.modify_markup( page_data, page_markup )
+    end
+    page_markup
+  end
+end
+
+
 # 2) require all ruby files in the global_injectors_dir
-# 3) on require, each ruby file should automatically register its plugin(s)
-# 
+#    on require, each ruby file should automatically register its plugin(s)
+
+Dir[config[:global_injectors_dir]+"/*.rb"].each do |file|
+  require file
+  logger.info("Required plugin: " + file)
+end
+
+ 
 # 4) (Optional idea) Each plugin defines which page_data keys it wants and it
 #    can only receive those keys. That increases the liklihood of the plugin
 #    code listing all the keys it uses in one place. (Although it might list
 #    keys that the code no longer uses.)
+
+# TEST:
+#puts Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" )
+logger.debug( Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
 
 
 ##########################
