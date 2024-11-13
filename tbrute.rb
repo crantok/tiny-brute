@@ -2,8 +2,12 @@
 
 require 'optparse'
 require 'logger'
+require 'toml-rb'
+require 'pathname'
+
 
 # APP_NAME = "Tiny Brute"
+PAGE_FILENAME_EXTENSION = "page.brute"
 
 
 ############################
@@ -73,7 +77,8 @@ config = {
 
   # Including microseconds in the output dir name in case this script is run
   # more than once in the same second.
-  output_dir: File.join( project_dir, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+#  output_dir: File.join( project_dir, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+  output_dir: File.join( project_dir, 'output' )
 }
 
 
@@ -100,11 +105,16 @@ class Plugins
   def self.register( plugin )
     @@plugins << plugin
   end
-  def self.inflate_page( page_data, page_markup )
+  def self.inflate_page( properties, markup )
     @@plugins.each do |p|
-      page_markup = p.modify_markup( page_data, page_markup )
+      markup = p.modify_page_markup( properties, markup )
     end
-    page_markup
+    markup
+  end
+  def self.finalise( output_dir )
+    @@plugins.each do |p|
+      p.finalise( output_dir )
+    end
   end
 end
 
@@ -114,7 +124,7 @@ end
 
 Dir[config[:global_injectors_dir]+"/*.rb"].each do |file|
   require file
-  logger.info("Required plugin: " + file)
+  logger.info("Required plugin file: " + file)
 end
 
  
@@ -124,18 +134,26 @@ end
 #    keys that the code no longer uses.)
 
 # TEST:
-logger.debug( "Testing sample plugin... (This will probably break if the sample plugin is changed or removed.)" )
+logger.debug( "Testing sample plugin... (This will probably break on a real website. TO DO: remove)" )
 logger.debug( Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
 
 
 ##########################
 # Generate output from the input directory
 #
-# process the input directory:
-#     for each static page
-#         for each plugin
-#             call inject_markup( page_data, page_markup ) => page_markup
-#         end
-#     end
-#     save final page_markup to output directory
+
+in_dir_path = Pathname.new config[:input_dir]
+
+# For each page file
+Dir.glob( File.join( config[:input_dir], "**", "*." + PAGE_FILENAME_EXTENSION ) ) do | filename |
+
+  page_properties = TomlRB.load_file(filename)
+  markup = Plugins.inflate_page(
+    page_properties, File.read( page_properties["template"] ) )
+
+  in_file_path = Pathname.new filename
+  file_rel_path = in_file_path.relative_path_from in_dir_path
+  output_filename = File.join( config[:output_dir], file_rel_path )
+  File.write( output_filename, markup )
+end
 
