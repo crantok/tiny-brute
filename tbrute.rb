@@ -9,8 +9,16 @@ require 'pathname'
 # APP_NAME = "Tiny Brute"
 PAGE_FILENAME_EXTENSION = "page.brute"
 PROJECT_DIR_ARG_NAME = "PROJECT_DIRECTORY"
+DEFAULT_PROJECT_DIR = Dir.pwd
+DEFAULT_OUTPUT_DIR = "work-in-progress"
 
-config = { project_dir: Dir.pwd }
+CMD_GENERATE = "generate"
+CMD_CLEAN_AND_GENERATE = "clean-and-generate"
+CMD_PUBLISH = "publish"
+COMMANDS = [ CMD_GENERATE, CMD_CLEAN_AND_GENERATE, CMD_PUBLISH ]
+
+config = { project_dir: DEFAULT_PROJECT_DIR }
+
 
 
 ############################
@@ -18,6 +26,7 @@ config = { project_dir: Dir.pwd }
 #
 logger = Logger.new(STDERR)
 logger.level = Logger::DEBUG
+
 
 
 ##########################
@@ -70,13 +79,19 @@ logger.info( "Generating static site from project at " + config[:project_dir] )
 # 
 
 if ARGV.length > 1
-  logger.error( "Too many arguments. Expected COMMAND or nothing." )
+  logger.error( "Too many arguments. Expected one of #{COMMANDS} (or nothing). Got: #{ARGV}" )
   abort()
 elsif ARGV.length == 1
-  command = ARGV[0]
+  command = COMMANDS.find do |x| x.start_with?( ARGV[0] ) end
+  if command.nil?
+    logger.error( "Unknown command '#{ARGV[0]}'. Expected one of #{COMMANDS} (or nothing)." )
+    abort()
+  end
 else
-  command = "gen"
+  command = CMD_GENERATE
 end
+
+logger.info( "Executing command: #{command}" )
 
 
 
@@ -88,14 +103,25 @@ config[:input_dir] = File.join( config[:project_dir], 'input' )
 config[:global_injectors_dir] = File.join( config[:project_dir], 'globals' )
 
 config[:output_dir] =
-  if [ 'gen', 'generate', 'clgen', 'clean-and-generate' ].include? command
-    File.join( config[:project_dir], 'output' )
-
-  else  # [ 'pub', 'publish' ].include? command
+  if command == CMD_PUBLISH
     # Including microseconds in the output dir name in case this script is run
     # more than once in the same second.
-    File.join( project_dir, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+    File.join( config[:project_dir], Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+  else
+    File.join( config[:project_dir], DEFAULT_OUTPUT_DIR )
   end
+
+
+
+##########################
+# Might Do: Load any config overrides from TOML file
+#
+# Note: We won't override the project directory via config file (because we're
+# looking for the config file in the project directory) but we could override
+# other paths.
+#
+
+logger.info("Loaded config: \n" + config.to_s)
 
 
 
@@ -103,20 +129,10 @@ config[:output_dir] =
 # Clean output directory if appropriate.
 #
 
-if [ 'clgen', 'clean-and-generate' ].include? command
-  # TO DO: delete contents of project-dir
+if command == CMD_CLEAN_AND_GENERATE
+  # TO DO: delete contents of output dir
 end
 
-
-##########################
-# Optional - To Do: Load any config overrides from TOML file
-#
-# Note: We won't override the project directory via config file but we can
-# override any other paths.
-#
-
-
-logger.info("Loaded config: \n" + config.to_s)
 
 
 ##########################
@@ -153,14 +169,16 @@ Dir[ File.join( config[:global_injectors_dir], "*.rb" ) ].each do |file|
 end
 
 
-# 3) (Optional idea) Each plugin defines which page_data keys it wants and it
+# 3) Might Do:  Each plugin defines which page_data keys it wants and it
 #    can only receive those keys. That increases the liklihood of the plugin
 #    code listing all the keys it uses in one place. (Although it might list
 #    keys that the code no longer uses.)
 
-# TEST:
+
+# 4) TEST:
 logger.debug( "Testing sample plugin... (This will probably break on a real website. TO DO: remove)" )
 logger.debug( Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
+
 
 
 ##########################
