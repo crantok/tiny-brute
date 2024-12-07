@@ -4,13 +4,16 @@ require 'optparse'
 require 'logger'
 require 'toml-rb'
 require 'pathname'
+require "fileutils"
+
 
 
 # APP_NAME = "Tiny Brute"
 PAGE_FILENAME_EXTENSION = "page.brute"
 PROJECT_DIR_ARG_NAME = "PROJECT_DIRECTORY"
 DEFAULT_PROJECT_DIR = Dir.pwd
-DEFAULT_OUTPUT_DIR = "work-in-progress"
+DEFAULT_GENERATE_DIR = "work-in-progress"
+DEFAULT_PUBLISH_DIR = "published"
 
 CMD_GENERATE = "generate"
 CMD_CLEAN_AND_GENERATE = "clean-and-generate"
@@ -30,10 +33,11 @@ logger.level = Logger::DEBUG
 
 
 ##########################
-# Process command line options
+# Parse command line options/switches and remove them from ARGV.
 #
-# Processing options first because OptionParser#parse! conveniently removes
-# all options and their associated arguments from ARGV.
+# Removal of options/switches and their associated arguments from ARGV is a
+# side effect of calling OptionParser#parse! Afterwards, ARGV will only contain
+# "positional" arguments.
 
 OptionParser.new do |parser|
 
@@ -43,26 +47,27 @@ OptionParser.new do |parser|
     "Usage: #{File.basename(__FILE__)} [OPTIONS] COMMAND
 
 COMMANDS:
-    generate | gen (default command)
+    #{CMD_GENERATE} (default command)
         generate site in the work-in-progress directory
-        (default directory: #{PROJECT_DIR_ARG_NAME}/output)
-    clean-and-generate | clgen
+        default directory: #{PROJECT_DIR_ARG_NAME}/#{DEFAULT_GENERATE_DIR}
+    #{CMD_CLEAN_AND_GENERATE}
         delete contents of the work-in-progress directory and then generate
         site there
-    publish | pub
+    #{CMD_PUBLISH}
         generate site in a new, (probably) uniquely-named directory
+        default directory: #{PROJECT_DIR_ARG_NAME}/#{DEFAULT_PUBLISH_DIR}/<timestamp-derived name>
 
 OPTIONS:"
 
   parser.on(
-    "-d #{PROJECT_DIR_ARG_NAME}", # mandatory argument when this option is used
+    "-d #{PROJECT_DIR_ARG_NAME}", # no square brackets, therefore mandatory argument
     "--project-dir",
     "The directory of the project to process (default = present working directory)"
   ) do | dir |
     config[:project_dir] = File.expand_path( dir )
   end
 
-  # Can change option parsing error messages by rescuing errors...
+  # Can change option parsing error messages by rescuing errors, e.g...
   # rescue OptionParser::InvalidOption => e
   # rescue OptionParser::InvalidArgument => e
 
@@ -75,20 +80,23 @@ logger.info( "Generating static site from project at " + config[:project_dir] )
 
 
 ###########################
-# Process command
+# Parse the requested command from the positional command line arguments
 # 
 
 if ARGV.length > 1
   logger.error( "Too many arguments. Expected one of #{COMMANDS} (or nothing). Got: #{ARGV}" )
   abort()
+
 elsif ARGV.length == 1
   command = COMMANDS.find do |x| x.start_with?( ARGV[0] ) end
   if command.nil?
     logger.error( "Unknown command '#{ARGV[0]}'. Expected one of #{COMMANDS} (or nothing)." )
     abort()
   end
+
 else
   command = CMD_GENERATE
+
 end
 
 logger.info( "Executing command: #{command}" )
@@ -104,24 +112,21 @@ config[:global_injectors_dir] = File.join( config[:project_dir], 'globals' )
 
 config[:output_dir] =
   if command == CMD_PUBLISH
-    # Including microseconds in the output dir name in case this script is run
+    # Including nanoseconds in the output dir name in case this script is run
     # more than once in the same second.
-    File.join( config[:project_dir], Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+    File.join( config[:project_dir], DEFAULT_PUBLISH_DIR, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
   else
-    File.join( config[:project_dir], DEFAULT_OUTPUT_DIR )
+    File.join( config[:project_dir], DEFAULT_GENERATE_DIR )
   end
+
+logger.info("Loaded config: \n" + config.to_s)
 
 
 
 ##########################
-# Might Do: Load any config overrides from TOML file
-#
-# Note: We won't override the project directory via config file (because we're
-# looking for the config file in the project directory) but we could override
-# other paths.
-#
+# Create output dir if it doesn't exist
 
-logger.info("Loaded config: \n" + config.to_s)
+FileUtils.mkdir_p( config[:output_dir] )
 
 
 
