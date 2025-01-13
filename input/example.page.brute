@@ -15,7 +15,7 @@
 # assumed to be relative to the PROJECT_DIRECTORY.
 #
 
-template = "blog-post.html"
+template = "example-template.html"
 
 
 
