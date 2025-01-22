@@ -24,7 +24,7 @@ config = { project_dir: DEFAULT_PROJECT_DIR }
 
 
 
-############################
+##############################################################################
 # Initialise logging
 #
 logger = Logger.new(STDERR)
@@ -32,7 +32,7 @@ logger.level = Logger::DEBUG
 
 
 
-##########################
+##############################################################################
 # Parse command line options/switches and remove them from ARGV.
 #
 # Removal of options/switches and their associated arguments from ARGV is a
@@ -79,7 +79,7 @@ logger.info( "Generating static site from project at " + config[:project_dir] )
 
 
 
-###########################
+##############################################################################
 # Parse the requested command from the positional command line arguments
 # 
 
@@ -103,12 +103,12 @@ logger.info( "Executing command: #{command}" )
 
 
 
-############################
+##############################################################################
 # Define default config
 #
 
 config[:input_dir] = File.join( config[:project_dir], 'input' )
-config[:global_injectors_dir] = File.join( config[:project_dir], 'globals' )
+config[:plugins_dir] = File.join( config[:project_dir], 'plugins' )
 
 config[:output_dir] =
   if command == CMD_PUBLISH
@@ -123,14 +123,14 @@ logger.info("Loaded config: \n" + config.to_s)
 
 
 
-##########################
+##############################################################################
 # Create output dir if it doesn't exist
 
 FileUtils.mkdir_p( config[:output_dir] )
 
 
 
-##########################
+##############################################################################
 # Clean output directory if appropriate.
 #
 
@@ -140,41 +140,55 @@ end
 
 
 
-##########################
-# Initialise global injectors
+##############################################################################
+# Initialise plugins
 #
 
 # 1) define class a plugin manager
 
 class Plugins
+
   @@plugins = []
+
   def self.register( plugin )
     @@plugins << plugin
   end
+
   def self.inflate_page( properties, markup )
     @@plugins.each do |p|
-      markup = p.modify_page_markup( properties, markup )
+      markup = p.modify_page_markup( properties, markup, @@logger )
+      
     end
     markup
   end
+
   def self.finalise( output_dir )
     @@plugins.each do |p|
       p.finalise( output_dir )
     end
   end
+
+  def self.set_logger( logger )
+    @@logger = logger
+  end
 end
 
 
-# 2) require all ruby files in the global_injectors_dir
+# 2) set logger
+#
+Plugins.set_logger( logger )
+
+
+# 3) require all ruby files in the plugins_dir
 #    on require, each ruby file should automatically register its plugin(s)
 
-Dir[ File.join( config[:global_injectors_dir], "*.rb" ) ].each do |file|
+Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
   require file
   logger.info("Required plugin file: " + file)
 end
 
 
-# 3) Might Do:  Each plugin defines which page_data keys it wants and it
+# 4) Might Do:  Each plugin defines which page_data keys it wants and it
 #    can only receive those keys. That increases the liklihood of the plugin
 #    code listing all the keys it uses in one place. (Although it might list
 #    keys that the code no longer uses.)
@@ -182,11 +196,11 @@ end
 
 # 4) TEST:
 logger.debug( "Testing sample plugin... (This will probably break on a real website. TO DO: remove)" )
-logger.debug( Plugins.inflate_page( {main_content:"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
+logger.debug( Plugins.inflate_page( {"main-content"=>"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
 
 
 
-##########################
+##############################################################################
 # Generate output from the input directory
 #
 
@@ -198,23 +212,30 @@ in_dir_path = Pathname.new config[:input_dir]
 # For each file in input directory
 Dir.glob( File.join( config[:input_dir], "**" ) ) do | filename |
 
+  logger.info( "Processing file: #{filename}" )
+
   if File.directory?( filename )
     # make same directory in output_dir
+    FileUtils.mkdir_p( filename )
 
 
   elsif filename.end_with?( PAGE_FILENAME_EXTENSION )
     # Load the page properties from the input dir
     page_properties = TomlRB.load_file(filename)
+    logger.debug( "    #{page_properties}" )
 
     # create the page markup
-    markup = Plugins.inflate_page(
-      page_properties, File.read( page_properties["template"] ) )
+    template = page_properties["template"]
+    markup = Plugins.inflate_page( page_properties, File.read( template ) )
 
     # save the page to the output dir
     in_file_path = Pathname.new filename
+    logger.debug( "    in_file_path: #{in_file_path}" )
     file_rel_path = in_file_path.relative_path_from in_dir_path
+    logger.debug( "    file_rel_path: #{file_rel_path}" )
     output_filename = File.join( config[:output_dir], file_rel_path )
     File.write( output_filename, markup )
+    logger.info( "Wrote output file: #{output_filename}" )
 
   else
     # copy file to destination
