@@ -205,14 +205,16 @@ logger.debug( Plugins.inflate_page( {"main-content"=>"<p>Foo</p>"}, "<html><body
 # Process contents of input directory and copy results to output directory.
 #
 
-globs = [ File.join( config[:input_dir], "**/*" ),
-          File.join( config[:input_dir], "**/.*" ) ]
-
-# For each path in the input directory
-Dir.glob( globs ) do | input_path |
+# For each path in the input directory, including "hidden" files and
+# directories like .htaccess
+#
+Dir.glob( File.join( config[:input_dir], "**/*", File::FNM_DOTMATCH ) do | input_path |
 
   logger.info( "Processing input path: #{input_path}" )
 
+
+  # Calculate the output path.
+  # Later code might alter this output path.
   p = Pathname.new( input_path )
   output_path = File.join(
     config[:output_dir],
