@@ -1,0 +1,85 @@
+##############################################################################
+#
+# An example content file for the Tiny Brute static site generator.
+#
+# The file format is TOML, which contains key value pairs.
+#
+##############################################################################
+
+
+
+##############################################################################
+# The one mandatory key is "template", which contains the path to the template
+# file to use for this content.
+# When defined with a relative path (i.e. no leading slash), the path is
+# assumed to be relative to the PROJECT_DIRECTORY.
+#
+
+template = "example-template.html"
+
+
+
+##############################################################################
+# You can define any other keys you like. The only thing that Tiny Brute will
+# do with these keys is to pass them to the global injectors.
+#
+
+type = "blog-post"  # If you don't want to rely on the template to imply this.
+
+date = 2024-10-31
+
+date-to-publish = 2024-11-01  # What different dates mean is up to you and the injectors you write. Tiny Brute doesn't care.
+
+categories = [ "foo", "bar", "baz" ]
+
+main-content = """
+<p>This is the best blog post I've ever written.</p>
+<p>If I knew it was going to be this good, I would have started a blog to put it in.</p>
+"""
+
+
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+# The following might be unecessary and could be removed...
+
+
+##############################################################################
+# "injectors" is assumed to be an array of tables.
+# Each table in the array defines a very simple content injector.
+# The only reason to do this is if the page requires some custom content-
+# injection that you don't want to be a global injector.
+# You probably won't do this if the content is being created by non-technical
+# users because they could break your custom injectors.
+#
+
+[[injectors]]
+
+# Every injector needs to have a path in order to identify the element to
+# modify in the template.
+# Every element that matches the path will be modified in the same way.
+path = 'body #main-image'
+
+# Want to add or replace an attribute? No problem.
+attributes.src = "assets/big-ol-image.png"
+attributes.class = "imagey biggy oldy"
+
+# Want to remove an attribute? Also no problem
+attributes.foo = ""
+
+
+[[injectors]]
+
+path = "body .pasag-comment"
+
+# The only way you can modify the children of an element is to completely
+# replace them with a string that is assumed to contain valid HTML.
+# No, I won't implement anything more sophisticated than this.
+content = """
+<h3>Behold&excl;</h3>
+<p>I have <em>replaced</em> the content of this element&excl;</p>
+"""
+

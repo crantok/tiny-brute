@@ -9,7 +9,8 @@ require "fileutils"
 
 
 # APP_NAME = "Tiny Brute"
-PAGE_FILENAME_EXTENSION = "page.brute"
+INPUT_FILENAME_EXTENSION = "page.brute"
+OUTPUT_FILENAME_EXTENSION = "html"
 PROJECT_DIR_ARG_NAME = "PROJECT_DIRECTORY"
 DEFAULT_PROJECT_DIR = Dir.pwd
 DEFAULT_GENERATE_DIR = "work-in-progress"
@@ -195,50 +196,52 @@ end
 
 
 # 4) TEST:
-logger.debug( "Testing sample plugin... (This will probably break on a real website. TO DO: remove)" )
-logger.debug( Plugins.inflate_page( {"main-content"=>"Foo"}, "<html><body><div id='main-content'></div></body></html>" ))
+logger.debug( "Testing sample plugin... (This requires the example plugin or equivalent functionality.)" )
+logger.debug( Plugins.inflate_page( {"main-content"=>"<p>Foo</p>"}, "<html><body><div id='main-content'></div></body></html>" ))
 
 
 
 ##############################################################################
-# Generate output from the input directory
+# Process contents of input directory and copy results to output directory.
 #
 
-in_dir_path = Pathname.new config[:input_dir]
+# For each path in the input directory
+Dir.glob( File.join( config[:input_dir], "**" ) ) do | input_path |
 
-# # For each page file
-# Dir.glob( File.join( config[:input_dir], "**", "*." + PAGE_FILENAME_EXTENSION ) ) do | filename |
+  logger.info( "Processing input path: #{input_path}" )
 
-# For each file in input directory
-Dir.glob( File.join( config[:input_dir], "**" ) ) do | filename |
-
-  logger.info( "Processing file: #{filename}" )
-
-  if File.directory?( filename )
-    # make same directory in output_dir
-    FileUtils.mkdir_p( filename )
+  p = Pathname.new( input_path )
+  output_path = File.join(
+    config[:output_dir],
+    p.relative_path_from( Pathname.new( config[:input_dir] ) )
+  )
 
 
-  elsif filename.end_with?( PAGE_FILENAME_EXTENSION )
-    # Load the page properties from the input dir
-    page_properties = TomlRB.load_file(filename)
+  if File.directory?( input_path )
+
+    # make the relevant output subdirectory if it does not exist
+    FileUtils.mkdir_p( output_path )
+
+  elsif input_path.end_with?( INPUT_FILENAME_EXTENSION )
+
+    # Load the page properties from the input file
+    page_properties = TomlRB.load_file( input_path )
     logger.debug( "    #{page_properties}" )
 
     # create the page markup
     template = page_properties["template"]
     markup = Plugins.inflate_page( page_properties, File.read( template ) )
 
-    # save the page to the output dir
-    in_file_path = Pathname.new filename
-    logger.debug( "    in_file_path: #{in_file_path}" )
-    file_rel_path = in_file_path.relative_path_from in_dir_path
-    logger.debug( "    file_rel_path: #{file_rel_path}" )
-    output_filename = File.join( config[:output_dir], file_rel_path )
-    File.write( output_filename, markup )
-    logger.info( "Wrote output file: #{output_filename}" )
+    # save the html page to the output directory
+    output_path = output_path.delete_suffix(
+      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
+    File.write( output_path, markup )
 
   else
-    # copy file to destination
 
+    # copy file to destination
+    FileUtils::cp( input_path, output_path )
   end
+
+  logger.info( "Wrote output path: #{output_path}" )
 end
