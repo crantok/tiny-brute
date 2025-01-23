@@ -205,8 +205,11 @@ logger.debug( Plugins.inflate_page( {"main-content"=>"<p>Foo</p>"}, "<html><body
 # Process contents of input directory and copy results to output directory.
 #
 
+globs = [ File.join( config[:input_dir], "**/*" ),
+          File.join( config[:input_dir], "**/.*" ) ]
+
 # For each path in the input directory
-Dir.glob( File.join( config[:input_dir], "**" ) ) do | input_path |
+Dir.glob( globs ) do | input_path |
 
   logger.info( "Processing input path: #{input_path}" )
 
@@ -226,7 +229,7 @@ Dir.glob( File.join( config[:input_dir], "**" ) ) do | input_path |
 
     # Load the page properties from the input file
     page_properties = TomlRB.load_file( input_path )
-    logger.debug( "    #{page_properties}" )
+    logger.debug( page_properties )
 
     # create the page markup
     template = page_properties["template"]
@@ -243,5 +246,5 @@ Dir.glob( File.join( config[:input_dir], "**" ) ) do | input_path |
     FileUtils::cp( input_path, output_path )
   end
 
-  logger.info( "Wrote output path: #{output_path}" )
+  logger.info( "Wrote output path: #{output_path}\n" )
 end
