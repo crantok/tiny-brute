@@ -1,0 +1,79 @@
+##############################################################################
+#
+# An example content file for the Tiny Brute static site generator.
+#
+# The file format is TOML, which contains key-value pairs.
+#
+##############################################################################
+
+
+
+##############################################################################
+# The one mandatory key is "template", which contains the path to the template
+# file to use for this content.
+# When defined with a relative path (i.e. no leading slash), the path is
+# assumed to be relative to the PROJECT_DIRECTORY.
+#
+
+template = "a-template.html"
+
+
+
+##############################################################################
+# You can define any other keys you like. The only thing that Tiny Brute will
+# do with these keys is to pass them to the global injectors.
+#
+
+type = "home-page" # If you don't want to rely on the template to imply this.
+
+# What different dates mean is up to you and the plugins you write.
+# Tiny Brute doesn't care.
+date = 2024-10-31
+date-to-publish = 2024-11-01
+
+# Want categories / tags / labels? Add anything you like.
+categories = [ "foo", "bar", "baz" ]
+
+# The key for your page/post/other main content can be whatever you like.
+main-content = """
+<p>This is the best home page I've ever written.</p>
+<p>If I knew it was going to be this good, I would have started a webite to put it in.</p>
+"""
+
+
+
+
+### Advanced usage - not part of the example site... ###
+### Advanced usage - not part of the example site... ###
+### Advanced usage - not part of the example site... ###
+### Advanced usage - not part of the example site... ###
+### Advanced usage - not part of the example site... ###
+
+##############################################################################
+# TOML files allow you to define a named array of hashes.
+# The following is an array called injectors, which contains two hashes.
+# A plugin could inject pieces of content into the template based on
+# the hashes in this array. See notes below.
+
+[[injectors]]
+
+# This CSS selector could be used by Nokogiri or another library to identify
+# an HTML element...
+path = 'body #main-image'
+
+# ...for which you could set these attribute values:
+attributes.src = "assets/big-ol-image.png"
+attributes.class = "imagey biggy oldy"
+
+
+[[injectors]]
+
+# And this CSS selector...
+path = "body .pasag-comment"
+
+# ... could be used to inject this content into the relevant HTML element(s).
+content = """
+<h3>Behold&excl;</h3>
+<p>I have <em>replaced</em> the content of this element&excl;</p>
+"""
+

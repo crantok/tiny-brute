@@ -136,7 +136,7 @@ FileUtils.mkdir_p( config[:output_dir] )
 #
 
 if command == CMD_CLEAN_AND_GENERATE
-  # TO DO: delete contents of output dir
+  FileUtils.rm_f( Dir.glob( "work-in-progress/*", File::FNM_DOTMATCH ) ) 
 end
 
 
@@ -155,32 +155,22 @@ class Plugins
     @@plugins << plugin
   end
 
-  def self.inflate_page( properties, markup )
+  def self.inflate_page( output_path, properties, markup, logger )
     @@plugins.each do |p|
-      markup = p.modify_page_markup( properties, markup, @@logger )
-      
+      markup = p.modify_page_markup( output_path, properties, markup, logger )
     end
     markup
   end
 
-  def self.finalise( output_dir )
+  def self.finalise( logger )
     @@plugins.each do |p|
-      p.finalise( output_dir )
+      p.finalise( logger )
     end
-  end
-
-  def self.set_logger( logger )
-    @@logger = logger
   end
 end
 
 
-# 2) set logger
-#
-Plugins.set_logger( logger )
-
-
-# 3) require all ruby files in the plugins_dir
+# 2) require all ruby files in the plugins_dir
 #    on require, each ruby file should automatically register its plugin(s)
 
 Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
@@ -189,15 +179,20 @@ Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
 end
 
 
-# 4) Might Do:  Each plugin defines which page_data keys it wants and it
+# 3) Might Do:  Each plugin defines which page_data keys it wants and it
 #    can only receive those keys. That increases the liklihood of the plugin
 #    code listing all the keys it uses in one place. (Although it might list
 #    keys that the code no longer uses.)
 
 
 # 4) TEST:
-logger.debug( "Testing sample plugin... (This requires the example plugin or equivalent functionality.)" )
-logger.debug( Plugins.inflate_page( {"main-content"=>"<p>Foo</p>"}, "<html><body><div id='main-content'></div></body></html>" ))
+logger.debug( "Testing example plugin... (This requires the example plugin or equivalent functionality.)" )
+logger.debug( Plugins.inflate_page(
+  "debug.html",
+  {"main-content"=>"<p>This paragraph was injected into the template!</p>"},
+  "<html><body><div id='main-content'></div></body></html>",
+  logger
+))
 
 
 
@@ -208,13 +203,13 @@ logger.debug( Plugins.inflate_page( {"main-content"=>"<p>Foo</p>"}, "<html><body
 # For each path in the input directory, including "hidden" files and
 # directories like .htaccess
 #
-Dir.glob( File.join( config[:input_dir], "**/*", File::FNM_DOTMATCH ) do | input_path |
+Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | input_path |
 
   logger.info( "Processing input path: #{input_path}" )
 
 
   # Calculate the output path.
-  # Later code might alter this output path.
+  # Later code might alter the output path for this particular file.
   p = Pathname.new( input_path )
   output_path = File.join(
     config[:output_dir],
@@ -227,7 +222,12 @@ Dir.glob( File.join( config[:input_dir], "**/*", File::FNM_DOTMATCH ) do | input
     # make the relevant output subdirectory if it does not exist
     FileUtils.mkdir_p( output_path )
 
+
   elsif input_path.end_with?( INPUT_FILENAME_EXTENSION )
+
+    # Modify the extension of the output file, e.g. .content -> .html
+    output_path = output_path.delete_suffix(
+      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
 
     # Load the page properties from the input file
     page_properties = TomlRB.load_file( input_path )
@@ -235,11 +235,10 @@ Dir.glob( File.join( config[:input_dir], "**/*", File::FNM_DOTMATCH ) do | input
 
     # create the page markup
     template = page_properties["template"]
-    markup = Plugins.inflate_page( page_properties, File.read( template ) )
+    markup = Plugins.inflate_page(
+      output_path, page_properties, File.read( template ), logger )
 
     # save the html page to the output directory
-    output_path = output_path.delete_suffix(
-      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
     File.write( output_path, markup )
 
   else
@@ -250,3 +249,11 @@ Dir.glob( File.join( config[:input_dir], "**/*", File::FNM_DOTMATCH ) do | input
 
   logger.info( "Wrote output path: #{output_path}\n" )
 end
+
+
+##############################################################################
+# Allow plugins a chance to finalise any content based on what they collected
+# in the inflation of pages.
+#
+
+Plugins.finalise( logger )
