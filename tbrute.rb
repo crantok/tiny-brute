@@ -179,13 +179,7 @@ Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
 end
 
 
-# 3) Might Do:  Each plugin defines which page_data keys it wants and it
-#    can only receive those keys. That increases the liklihood of the plugin
-#    code listing all the keys it uses in one place. (Although it might list
-#    keys that the code no longer uses.)
-
-
-# 4) TEST:
+# 3) TEST:
 logger.debug( "Testing example plugin... (This requires the example plugin or equivalent functionality.)" )
 logger.debug( Plugins.inflate_page(
   "debug.html",
