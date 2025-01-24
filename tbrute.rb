@@ -136,7 +136,7 @@ FileUtils.mkdir_p( config[:output_dir] )
 #
 
 if command == CMD_CLEAN_AND_GENERATE
-  FileUtils.rm_f( Dir.glob( "work-in-progress/*", File::FNM_DOTMATCH ) ) 
+  FileUtils.rm_rf( Dir.glob( "work-in-progress/*", File::FNM_DOTMATCH ) )
 end
 
 
