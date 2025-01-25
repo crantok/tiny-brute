@@ -125,7 +125,10 @@ logger.info("Loaded config: \n" + config.to_s)
 
 
 ##############################################################################
-# Create output dir if it doesn't exist
+# Create output dir if it doesn't exist.
+#
+# TO DO: Test whether this is redundant. It might be accomplished by directory
+#        creation while processing and copying from the input directory.
 
 FileUtils.mkdir_p( config[:output_dir] )
 
@@ -162,9 +165,9 @@ class Plugins
     markup
   end
 
-  def self.finalise( logger )
+  def self.finalise( input_dir, output_dir,logger )
     @@plugins.each do |p|
-      p.finalise( logger )
+      p.finalise( input_dir, output_dir, logger )
     end
   end
 end
@@ -228,9 +231,9 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
     logger.debug( page_properties )
 
     # create the page markup
-    template = page_properties["template"]
+    template = File.read( page_properties["template"] ) # TO DO: Cache this
     markup = Plugins.inflate_page(
-      output_path, page_properties, File.read( template ), logger )
+      output_path, page_properties, template, logger )
 
     # save the html page to the output directory
     File.write( output_path, markup )
@@ -250,4 +253,4 @@ end
 # in the inflation of pages.
 #
 
-Plugins.finalise( logger )
+Plugins.finalise( config[:input_dir], config[:output_dir], logger )

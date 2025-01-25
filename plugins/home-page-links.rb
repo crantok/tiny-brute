@@ -1,6 +1,6 @@
 require 'nokogiri'
 
-class Main_Content
+class HomePageLinks
 
   ############################################################################
   # Method: modify_page_markup
@@ -33,10 +33,21 @@ class Main_Content
   #
   def self.modify_page_markup( output_path, page_data, page_markup, logger )
 
-    html = Nokogiri::HTML( page_markup )
-    html.at_css( '#main-content' ).add_child( page_data["main-content"] )
-    html.to_s
+    # Not making any changes to markup.
+    # Just collecting arrays of home-pages and blog-posts for finalise().
+    
+    @@home_pages ||= []
+    if page_data["type"] == "home-page"
+      @@home_pages << output_path
+    end
 
+    @@blog_posts ||= []
+    if page_data["type"] == "blog-post"
+      @@blog_posts << { path: output_path, title: page_data["title"] }
+    end
+
+    # Return page_markup unaltered.
+    page_markup
   end
 
   
@@ -50,11 +61,25 @@ class Main_Content
   #
   # logger:   A standard Ruby logger.
   #
-  def self.finalise( logger )
-    # Empty - Nothing required of this plugin.
+  def self.finalise( input_dir, output_dir, logger )
+
+    blog_links = @@blog_posts.reduce( "" ) do | html, post |
+      rel_path =
+        Pathname.new( post[:path] ).relative_path_from( Pathname.new( output_dir ) )
+      html += "<li><a href='/#{rel_path}'>#{post[:title]}</a></li>"
+    end
+
+    logger.debug( "HomePageLinks.finalise blog_links: #{blog_links}" )
+
+    @@home_pages.each do | filename |
+      html = Nokogiri::HTML( File.read( filename ) )
+      html.at_css( '#blog-links' ).add_child( blog_links )
+      File.write( filename, html.to_s )
+    end
+
   end
 end
 
 
-Plugins.register( Main_Content )
+Plugins.register( HomePageLinks )
 

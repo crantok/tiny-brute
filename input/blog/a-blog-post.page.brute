@@ -26,6 +26,8 @@ template = "a-template.html"
 
 type = "blog-post"  # If you don't want to rely on the template to imply this.
 
+title = "My Super Blog Post"
+
 # What different dates mean is up to you and the plugins you write.
 # Tiny Brute doesn't care.
 date = 2024-10-31
