@@ -5,15 +5,14 @@ class MainContent
   #############################################################################
   # Method: modify_page_markup
   #
-  # Called once for each piece of content.
+  # Called once for each html page that is to be generated.
   #
-  # Make any required modifications to the markup for the relevant piece of
-  # content.
+  # Make any required modifications to the markup for the relevant html page.
   #
-  # Plugins are not guaranteed to be executed in any given order, so if
-  # there is something you need to do after all plugins have been called
-  # then store the relevant information here and call your after-everything-
-  # else code in the finalise method.
+  # Plugins are not guaranteed to be executed in any given order.
+  # If there is something you need to do after all plugins have been called
+  # then store the relevant information here and call your after-everything
+  # -else code in the finalise method.
   # See the HomePageLinks plugin for an example of how to do this.
   #
   # Arguments:
@@ -24,9 +23,9 @@ class MainContent
   #                  be saved to. Useful when caching information for the
   #                  finalise method below.
   #
-  #   page_data:   A hash containing data for the relevant piece of content.
+  #   page_data:   A hash containing data for the relevant html page.
   #
-  #   page_markup: The markup so far for the relevant piece of content.
+  #   page_markup: The markup so far for the relevant html page.
   #                If this is the first plugin to be called then the markup
   #                is the raw content of the relevant template.
   #                If this is the final plugin to be called then the markup
@@ -47,10 +46,10 @@ class MainContent
   #############################################################################
   # Method: finalise
   #
-  # Called once after all content has been saved.
+  # Called once after all html pages have been generated and saved.
   #
   # Use information collected in the modify_page_markup method to make any
-  # further modifications to content files.
+  # further modifications to the contents of the output directory.
   #
   # Arguments:
   #
