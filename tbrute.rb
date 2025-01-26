@@ -1,5 +1,15 @@
 #!/usr/bin/ruby
 
+##############################################################################
+# Tiny Brute static site generator
+#
+# A static site generator that is mostly agnostic about the data used for page
+# generation.
+# Content data/metadata is defined in TOML format.
+# Only one key-value pair (key = "template") is required by this script.
+# Other keys only interact with user-defined plugins.
+
+
 require 'optparse'
 require 'logger'
 require 'toml-rb'
@@ -7,21 +17,29 @@ require 'pathname'
 require "fileutils"
 
 
-
 # APP_NAME = "Tiny Brute"
-INPUT_FILENAME_EXTENSION = "page.brute"
-OUTPUT_FILENAME_EXTENSION = "html"
-PROJECT_DIR_ARG_NAME = "PROJECT_DIRECTORY"
-DEFAULT_PROJECT_DIR = Dir.pwd
-DEFAULT_GENERATE_DIR = "work-in-progress"
-DEFAULT_PUBLISH_DIR = "published"
+
+PROJECT_DIR_CLI_ARG_NAME = "PROJECT_DIRECTORY"
 
 CMD_GENERATE = "generate"
 CMD_CLEAN_AND_GENERATE = "clean-and-generate"
 CMD_PUBLISH = "publish"
 COMMANDS = [ CMD_GENERATE, CMD_CLEAN_AND_GENERATE, CMD_PUBLISH ]
 
-config = { project_dir: DEFAULT_PROJECT_DIR }
+DEFAULT_PROJECT_DIR = Dir.pwd
+
+# Paths relative to the project directory.
+DEFAULT_GENERATE_REL_DIR = "work-in-progress"
+DEFAULT_PUBLISH_REL_DIR = "published"
+DEFAULT_PLUGINS_REL_DIR = "plugins"
+DEFAULT_INPUT_REL_DIR = "input"
+
+# The only type of file we apply processing to.
+# Other input files are just copied to the output directory.
+INPUT_FILENAME_EXTENSION = "page.brute"
+OUTPUT_FILENAME_EXTENSION = "html"
+
+config = {}
 
 
 
@@ -50,18 +68,18 @@ OptionParser.new do |parser|
 COMMANDS:
     #{CMD_GENERATE} (default command)
         generate site in the work-in-progress directory
-        default directory: #{PROJECT_DIR_ARG_NAME}/#{DEFAULT_GENERATE_DIR}
+        default directory: #{PROJECT_DIR_CLI_ARG_NAME}/#{DEFAULT_GENERATE_REL_DIR}
     #{CMD_CLEAN_AND_GENERATE}
         delete contents of the work-in-progress directory and then generate
         site there
     #{CMD_PUBLISH}
         generate site in a new, (probably) uniquely-named directory
-        default directory: #{PROJECT_DIR_ARG_NAME}/#{DEFAULT_PUBLISH_DIR}/<timestamp-derived name>
+        default directory: #{PROJECT_DIR_CLI_ARG_NAME}/#{DEFAULT_PUBLISH_REL_DIR}/<timestamp-derived name>
 
 OPTIONS:"
 
   parser.on(
-    "-d #{PROJECT_DIR_ARG_NAME}", # no square brackets, therefore mandatory argument
+    "-d #{PROJECT_DIR_CLI_ARG_NAME}", # no square brackets, therefore mandatory argument
     "--project-dir",
     "The directory of the project to process (default = present working directory)"
   ) do | dir |
@@ -76,7 +94,6 @@ end.parse!
 # Only positional arguments are left in ARGV.
 # OptionParser has removed all options/switches and their arguments.
 
-logger.info( "Generating static site from project at " + config[:project_dir] )
 
 
 
@@ -105,19 +122,23 @@ logger.info( "Executing command: #{command}" )
 
 
 ##############################################################################
-# Define default config
-#
+# Set default config where it has not already been set, e.g. from command line
+# arguments.
 
-config[:input_dir] = File.join( config[:project_dir], 'input' )
-config[:plugins_dir] = File.join( config[:project_dir], 'plugins' )
+config[:project_dir] ||= DEFAULT_PROJECT_DIR
 
-config[:output_dir] =
+logger.info( "Generating static site from project at " + config[:project_dir] )
+
+config[:input_dir] ||= File.join( config[:project_dir], DEFAULT_INPUT_REL_DIR )
+config[:plugins_dir] ||= File.join( config[:project_dir], DEFAULT_PLUGINS_REL_DIR )
+
+config[:output_dir] ||=
   if command == CMD_PUBLISH
     # Including nanoseconds in the output dir name in case this script is run
     # more than once in the same second.
-    File.join( config[:project_dir], DEFAULT_PUBLISH_DIR, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
+    File.join( config[:project_dir], DEFAULT_PUBLISH_REL_DIR, Time.now.strftime('%Y-%m-%d--%H-%M--%S.%N') )
   else
-    File.join( config[:project_dir], DEFAULT_GENERATE_DIR )
+    File.join( config[:project_dir], DEFAULT_GENERATE_REL_DIR )
   end
 
 logger.info("Loaded config: \n" + config.to_s)
@@ -225,7 +246,7 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 
     # Load and cache the template if not already done
     template_cache[page_properties["template"]] ||=
-      File.read( page_properties["template"] )
+      File.read( File.join( config[:project_dir], page_properties["template"] ) )
 
     # Create the page markup
     markup = Plugins.inflate_page(
