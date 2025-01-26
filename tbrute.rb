@@ -122,8 +122,9 @@ logger.info( "Executing command: #{command}" )
 
 
 ##############################################################################
-# Set default config where it has not already been set, e.g. from command line
-# arguments.
+# Set default config where it has not already been set.
+#
+# Some config might already have been set from e.g. command line options.
 
 config[:project_dir] ||= DEFAULT_PROJECT_DIR
 
@@ -159,7 +160,7 @@ end
 # Initialise plugins
 #
 
-# 1) define class a plugin manager
+# 1) Define a plugin manager
 
 class Plugins
 
@@ -184,8 +185,8 @@ class Plugins
 end
 
 
-# 2) require all ruby files in the plugins_dir
-#    on require, each ruby file should automatically register its plugin(s)
+# 2) Require all ruby files in the plugins directory.
+#    On require, each ruby file should automatically register its plugin(s).
 
 Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
   require file
@@ -219,8 +220,8 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
   logger.info( "Processing input path: #{input_path}" )
 
 
-  # Calculate the relative path and output path.
-  # Later code might alter these for this particular file.
+  # Calculate the relative path and the output path.
+  # Later code might alter paths for this particular file.
   relative_path = Pathname.new( input_path ).relative_path_from(
     Pathname.new( config[:input_dir] ) ).to_s
   output_path = File.join( config[:output_dir], relative_path )
