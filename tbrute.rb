@@ -188,7 +188,7 @@ end
 # 2) Require all ruby files in the plugins directory.
 #    On require, each ruby file should automatically register its plugin(s).
 
-Dir[ File.join( config[:plugins_dir], "*.rb" ) ].each do |file|
+Dir.glob( File.join( config[:plugins_dir], "*.rb" ) ) do | file |
   require file
   logger.info("Required plugin file: " + file)
 end
