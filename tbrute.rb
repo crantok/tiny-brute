@@ -265,9 +265,27 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 end
 
 
+
 ##############################################################################
 # Allow plugins a chance to finalise any content based on what they collected
 # in the inflation of pages.
 #
 
 Plugins.finalise( config[:input_dir], config[:output_dir], logger )
+
+
+
+
+##############################################################################
+# If we are publishing a new version then create/replace the symlink to the
+# new output directory in its parent directory.
+#
+
+if command == CMD_PUBLISH
+  pub_parent_path = File.join( config[:output_dir], ".." )
+  link_path = File.join( pub_parent_path, "current" )
+  link_target = Pathname.new( config[:output_dir] ).relative_path_from( pub_parent_path )
+  FileUtils.rm( link_path )
+  FileUtils.ln_s( link_target, link_path )
+end
+
