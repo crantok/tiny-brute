@@ -24,6 +24,9 @@ PROJECT_DIR_CLI_ARG_NAME = "PROJECT_DIRECTORY"
 CMD_GENERATE = "generate"
 CMD_CLEAN_AND_GENERATE = "clean-and-generate"
 CMD_PUBLISH = "publish"
+
+# TO DO: ? Add ROLLBACK command ?
+
 COMMANDS = [ CMD_GENERATE, CMD_CLEAN_AND_GENERATE, CMD_PUBLISH ]
 
 DEFAULT_PROJECT_DIR = Dir.pwd
@@ -236,7 +239,7 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
   elsif input_path.end_with?( INPUT_FILENAME_EXTENSION )
 
     # Modify the extension of the relative and output paths
-    # e.g. .content -> .html
+    # e.g. .page.brute -> .html
     relative_path = relative_path.delete_suffix(
       INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
     output_path = output_path.delete_suffix(
