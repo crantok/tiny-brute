@@ -60,8 +60,7 @@ logger.level = Logger::DEBUG
 
 OptionParser.new do |parser|
 
-  # The only permitted command line option is a request for usage instructions
-  # triggered by -h or --help
+  # Triggered by -h or --help option.
   parser.banner =
     "Usage: #{File.basename(__FILE__)} [OPTIONS] COMMAND
 
@@ -78,6 +77,7 @@ COMMANDS:
 
 OPTIONS:"
 
+  # Option to specify the project directory.
   parser.on(
     "-d #{PROJECT_DIR_CLI_ARG_NAME}", # no square brackets, therefore mandatory argument
     "--project-dir",
@@ -252,7 +252,7 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
     markup = Plugins.inflate_page(
       relative_path, page_properties, template_cache[page_properties["template"]], logger )
 
-    # save the html page to the output directory
+    # Save the html page to the output directory
     File.write( output_path, markup )
 
   else
