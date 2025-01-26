@@ -18,6 +18,8 @@ class HomePageLinks
   #
   # Arguments:
   #
+  #   command:     The command that Tiny Brute is executing.
+  #
   #   relative_path: The relative path of the file that the final markup will
   #                  be saved to. Useful when caching information for the
   #                  finalise method below.
@@ -32,7 +34,7 @@ class HomePageLinks
   #
   #   logger:      A standard Ruby logger.
   #
-  def self.modify_page_markup( relative_path, page_data, page_markup, logger )
+  def self.modify_page_markup( command, relative_path, page_data, page_markup, logger )
 
     # Not making any changes to markup.
     # Just collecting arrays of home-pages and blog-posts for finalise().
@@ -62,13 +64,15 @@ class HomePageLinks
   #
   # Arguments:
   #
+  #   command:    The command that Tiny Brute is executing.
+  #
   #   input_dir:  The path to the directory containing the input files.
   #
   #   output_dir: The path to the directory containing the output files.
   #
   #   logger:     A standard Ruby logger.
   #
-  def self.finalise( input_dir, output_dir, logger )
+  def self.finalise( command, input_dir, output_dir, logger )
 
     blog_links = @@blog_posts.reduce( "" ) do | html, post |
       html += "<li><a href='/#{post[:path]}'>#{post[:title]}</a></li>"

@@ -18,6 +18,8 @@ class MainContent
   #
   # Arguments:
   #
+  #   command:     The command that Tiny Brute is executing.
+  #
   #   relative_path: The relative path of the file that the final markup will
   #                  be saved to. Useful when caching information for the
   #                  finalise method below.
@@ -32,7 +34,7 @@ class MainContent
   #
   #   logger:      A standard Ruby logger.
   #
-  def self.modify_page_markup( relative_path, page_data, page_markup, logger )
+  def self.modify_page_markup( command, relative_path, page_data, page_markup, logger )
 
     # Inject the main content contained in page_data into the markup.
     html = Nokogiri::HTML( page_markup )
@@ -52,13 +54,15 @@ class MainContent
   #
   # Arguments:
   #
+  #   command:    The command that Tiny Brute is executing.
+  #
   #   input_dir:  The path to the directory containing the input file.
   #
   #   output_dir: The path to the directory containing the output files.
   #
   #   logger:     A standard Ruby logger.
   #
-  def self.finalise( input_dir, output_dir, logger )
+  def self.finalise( command, input_dir, output_dir, logger )
     # Empty - Nothing required of this plugin.
   end
 end

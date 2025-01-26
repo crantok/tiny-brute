@@ -169,16 +169,16 @@ class Plugins
     @@plugins << plugin
   end
 
-  def self.inflate_page( output_path, properties, markup, logger )
+  def self.inflate_page( command, output_path, properties, markup, logger )
     @@plugins.each do |p|
-      markup = p.modify_page_markup( output_path, properties, markup, logger )
+      markup = p.modify_page_markup( command, output_path, properties, markup, logger )
     end
     markup
   end
 
-  def self.finalise( input_dir, output_dir,logger )
+  def self.finalise( command, input_dir, output_dir,logger )
     @@plugins.each do |p|
-      p.finalise( input_dir, output_dir, logger )
+      p.finalise( command, input_dir, output_dir, logger )
     end
   end
 end
@@ -196,6 +196,7 @@ end
 # 3) TEST:
 logger.debug( "Testing example plugin... (This requires the example MainContent plugin or equivalent functionality.)" )
 logger.debug( Plugins.inflate_page(
+  "not a command",
   "debug.html",
   {"main-content"=>"<p>This paragraph was injected into the template!</p>"},
   "<html><body><div id='main-content'></div></body></html>",
@@ -250,9 +251,14 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 
     # Create the page markup
     markup = Plugins.inflate_page(
-      relative_path, page_properties, template_cache[page_properties["template"]], logger )
+      command,
+      relative_path,
+      page_properties,
+      template_cache[page_properties["template"]],
+      logger
+    )
 
-    # Save the html page to the output directory
+    # Save the markup to an html file in the output directory
     File.write( output_path, markup )
 
   else
@@ -271,7 +277,7 @@ end
 # in the inflation of pages.
 #
 
-Plugins.finalise( config[:input_dir], config[:output_dir], logger )
+Plugins.finalise( command, config[:input_dir], config[:output_dir], logger )
 
 
 
