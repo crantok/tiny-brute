@@ -2,7 +2,7 @@ require 'nokogiri'
 
 class MainContent
 
-  ############################################################################
+  #############################################################################
   # Method: modify_page_markup
   #
   # Called once for each piece of content.
@@ -13,13 +13,14 @@ class MainContent
   # Plugins are not guaranteed to be executed in any given order, so if
   # there is something you need to do after all plugins have been called
   # then store the relevant information here and call your after-everything-
-  # else code in the finalise method. (See the Blog_Post plugin.)
+  # else code in the finalise method.
+  # See the HomePageLinks plugin for an example of how to do this.
   #
   # Arguments:
   #
-  #   output_path: This is the name of the file that the final markup will be
-  #                saved to. Probably only important if saving information for
-  #                the finalise method below.
+  #   relative_path: The relative path of the file that the final markup will
+  #                  be saved to. Useful when caching information for the
+  #                  finalise method below.
   #
   #   page_data:   A hash containing data for the relevant piece of content.
   #
@@ -27,11 +28,11 @@ class MainContent
   #                If this is the first plugin to be called then the markup
   #                is the raw content of the relevant template.
   #                If this is the final plugin to be called then the markup
-  #                returned by this method will be saved to output_path.
+  #                returned by this method will be saved to the output file.
   #
   #   logger:      A standard Ruby logger.
   #
-  def self.modify_page_markup( output_path, page_data, page_markup, logger )
+  def self.modify_page_markup( relative_path, page_data, page_markup, logger )
 
     # Inject the main content contained in page_data into the markup.
     html = Nokogiri::HTML( page_markup )
@@ -41,7 +42,7 @@ class MainContent
   end
 
   
-  ############################################################################
+  #############################################################################
   # Method: finalise
   #
   # Called once after all content has been saved.
@@ -49,7 +50,13 @@ class MainContent
   # Use information collected in the modify_page_markup method to make any
   # further modifications to content files.
   #
-  # logger:   A standard Ruby logger.
+  # Arguments:
+  #
+  #   input_dir:  The path to the directory containing the input file.
+  #
+  #   output_dir: The path to the directory containing the output files.
+  #
+  #   logger:     A standard Ruby logger.
   #
   def self.finalise( input_dir, output_dir, logger )
     # Empty - Nothing required of this plugin.

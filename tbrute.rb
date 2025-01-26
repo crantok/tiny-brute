@@ -125,16 +125,6 @@ logger.info("Loaded config: \n" + config.to_s)
 
 
 ##############################################################################
-# Create output dir if it doesn't exist.
-#
-# TO DO: Test whether this is redundant. It might be accomplished by directory
-#        creation while processing and copying from the input directory.
-
-FileUtils.mkdir_p( config[:output_dir] )
-
-
-
-##############################################################################
 # Clean output directory if appropriate.
 #
 
@@ -183,7 +173,7 @@ end
 
 
 # 3) TEST:
-logger.debug( "Testing example plugin... (This requires the example plugin or equivalent functionality.)" )
+logger.debug( "Testing example plugin... (This requires the example MainContent plugin or equivalent functionality.)" )
 logger.debug( Plugins.inflate_page(
   "debug.html",
   {"main-content"=>"<p>This paragraph was injected into the template!</p>"},
@@ -197,6 +187,8 @@ logger.debug( Plugins.inflate_page(
 # Process contents of input directory and copy results to output directory.
 #
 
+template_cache = {}
+
 # For each path in the input directory, including "hidden" files and
 # directories like .htaccess
 #
@@ -205,13 +197,11 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
   logger.info( "Processing input path: #{input_path}" )
 
 
-  # Calculate the output path.
-  # Later code might alter the output path for this particular file.
-  p = Pathname.new( input_path )
-  output_path = File.join(
-    config[:output_dir],
-    p.relative_path_from( Pathname.new( config[:input_dir] ) )
-  )
+  # Calculate the relative path and output path.
+  # Later code might alter these for this particular file.
+  relative_path = Pathname.new( input_path ).relative_path_from(
+    Pathname.new( config[:input_dir] ) ).to_s
+  output_path = File.join( config[:output_dir], relative_path )
 
 
   if File.directory?( input_path )
@@ -222,7 +212,10 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 
   elsif input_path.end_with?( INPUT_FILENAME_EXTENSION )
 
-    # Modify the extension of the output file, e.g. .content -> .html
+    # Modify the extension of the relative and output paths
+    # e.g. .content -> .html
+    relative_path = relative_path.delete_suffix(
+      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
     output_path = output_path.delete_suffix(
       INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
 
@@ -230,10 +223,13 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
     page_properties = TomlRB.load_file( input_path )
     logger.debug( page_properties )
 
-    # create the page markup
-    template = File.read( page_properties["template"] ) # TO DO: Cache this
+    # Load and cache the template if not already done
+    template_cache[page_properties["template"]] ||=
+      File.read( page_properties["template"] )
+
+    # Create the page markup
     markup = Plugins.inflate_page(
-      output_path, page_properties, template, logger )
+      relative_path, page_properties, template_cache[page_properties["template"]], logger )
 
     # save the html page to the output directory
     File.write( output_path, markup )
