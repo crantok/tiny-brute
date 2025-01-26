@@ -49,8 +49,22 @@ config = {}
 ##############################################################################
 # Initialise logging
 #
+
 logger = Logger.new(STDERR)
 logger.level = Logger::DEBUG
+
+
+
+##############################################################################
+# Exit with a helpful message on an unrecoverable error.
+#
+
+def fatal_error( message, usage )
+
+  STDERR.puts "\nFatal error: #{message}\n\n#{usage}"
+  exit 1
+
+end
 
 
 
@@ -61,13 +75,14 @@ logger.level = Logger::DEBUG
 # side effect of calling OptionParser#parse! Afterwards, ARGV will only contain
 # "positional" arguments.
 
-OptionParser.new do |parser|
+parser = OptionParser.new
 
-  # Triggered by -h or --help option.
-  parser.banner =
-    "Usage: #{File.basename(__FILE__)} [OPTIONS] COMMAND
+# Triggered by -h or --help option.
+parser.banner =
+  "Usage: #{File.basename(__FILE__)} [OPTIONS] COMMAND
 
 COMMANDS:
+    Commands can be truncated to the minimum unique string, e.g. first two letters.
     #{CMD_GENERATE} (default command)
         generate site in the work-in-progress directory
         default directory: #{PROJECT_DIR_CLI_ARG_NAME}/#{DEFAULT_GENERATE_REL_DIR}
@@ -80,22 +95,21 @@ COMMANDS:
 
 OPTIONS:"
 
-  # Option to specify the project directory.
-  parser.on(
-    "-d #{PROJECT_DIR_CLI_ARG_NAME}", # no square brackets, therefore mandatory argument
-    "--project-dir",
-    "The directory of the project to process (default = present working directory)"
-  ) do | dir |
-    config[:project_dir] = File.expand_path( dir )
-  end
+# Option to specify the project directory.
+parser.on(
+  "-d #{PROJECT_DIR_CLI_ARG_NAME}", # no square brackets, therefore mandatory argument
+  "--project-dir",
+  "The project directory to process (default: current working directory)"
+) do | dir |
+  config[:project_dir] = File.expand_path( dir )
+end
 
-  # Can change option parsing error messages by rescuing errors, e.g...
-  # rescue OptionParser::InvalidOption => e
-  # rescue OptionParser::InvalidArgument => e
-
-end.parse!
-# Only positional arguments are left in ARGV.
-# OptionParser has removed all options/switches and their arguments.
+# Try parsing options and abort on error
+begin
+  parser.parse!
+rescue OptionParser::ParseError => e
+  fatal_error( "#{e.reason} #{e.args.first}", parser.help )
+end
 
 
 
@@ -103,21 +117,25 @@ end.parse!
 ##############################################################################
 # Parse the requested command from the positional command line arguments
 # 
+# ARGV should only contain positional arguments after option parsing.
 
 if ARGV.length > 1
-  logger.error( "Too many arguments. Expected one of #{COMMANDS} (or nothing). Got: #{ARGV}" )
-  abort()
+  fatal_error(
+    "Too many arguments. Expected one of #{COMMANDS} (or nothing). Got: #{ARGV}",
+    parser.help
+  )
 
 elsif ARGV.length == 1
   command = COMMANDS.find do |x| x.start_with?( ARGV[0] ) end
   if command.nil?
-    logger.error( "Unknown command '#{ARGV[0]}'. Expected one of #{COMMANDS} (or nothing)." )
-    abort()
+    fatal_error(
+      "Unknown command '#{ARGV[0]}'. Expected one of #{COMMANDS} (or nothing).",
+      parser.help
+    )
   end
 
 else
   command = CMD_GENERATE
-
 end
 
 logger.info( "Executing command: #{command}" )
@@ -240,10 +258,10 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 
     # Modify the extension of the relative and output paths
     # e.g. .page.brute -> .html
-    relative_path = relative_path.delete_suffix(
-      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
-    output_path = output_path.delete_suffix(
-      INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
+    relative_path =
+      relative_path.delete_suffix( INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
+    output_path =
+      output_path.delete_suffix( INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
 
     # Load the page properties from the input file
     page_properties = TomlRB.load_file( input_path )
