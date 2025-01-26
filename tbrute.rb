@@ -177,9 +177,9 @@ class Plugins
     markup
   end
 
-  def self.finalise( command, input_dir, output_dir,logger )
+  def self.finalise( command, output_dir, logger )
     @@plugins.each do |p|
-      p.finalise( command, input_dir, output_dir, logger )
+      p.finalise( command, output_dir, logger )
     end
   end
 end
@@ -278,7 +278,7 @@ end
 # in the inflation of pages.
 #
 
-Plugins.finalise( command, config[:input_dir], config[:output_dir], logger )
+Plugins.finalise( command, config[:output_dir], logger )
 
 
 

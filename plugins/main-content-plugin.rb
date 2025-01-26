@@ -55,13 +55,11 @@ class MainContent
   #
   #   command:    The command that Tiny Brute is executing.
   #
-  #   input_dir:  The path to the directory containing the input file.
-  #
   #   output_dir: The path to the directory containing the output files.
   #
   #   logger:     A standard Ruby logger.
   #
-  def self.finalise( command, input_dir, output_dir, logger )
+  def self.finalise( command, output_dir, logger )
     # Empty - Nothing required of this plugin.
   end
 end

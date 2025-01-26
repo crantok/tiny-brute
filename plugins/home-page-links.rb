@@ -65,13 +65,11 @@ class HomePageLinks
   #
   #   command:    The command that Tiny Brute is executing.
   #
-  #   input_dir:  The path to the directory containing the input files.
-  #
   #   output_dir: The path to the directory containing the output files.
   #
   #   logger:     A standard Ruby logger.
   #
-  def self.finalise( command, input_dir, output_dir, logger )
+  def self.finalise( command, output_dir, logger )
 
     blog_links = @@blog_posts.reduce( "" ) do | html, post |
       html += "<li><a href='/#{post[:path]}'>#{post[:title]}</a></li>"
