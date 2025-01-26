@@ -222,8 +222,8 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
 
   # Calculate the relative path and the output path.
   # Later code might alter paths for this particular file.
-  relative_path = Pathname.new( input_path ).relative_path_from(
-    Pathname.new( config[:input_dir] ) ).to_s
+  relative_path =
+    Pathname.new( input_path ).relative_path_from( config[:input_dir] ).to_s
   output_path = File.join( config[:output_dir], relative_path )
 
 
