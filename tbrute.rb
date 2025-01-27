@@ -39,8 +39,8 @@ DEFAULT_INPUT_REL_DIR = "input"
 
 # The only type of file we apply processing to.
 # Other input files are just copied to the output directory.
-INPUT_FILENAME_EXTENSION = "page.brute"
-OUTPUT_FILENAME_EXTENSION = "html"
+INPUT_FILENAME_EXTENSION = ".page.toml"
+OUTPUT_FILENAME_EXTENSION = ".html"
 
 config = {}
 
@@ -216,14 +216,14 @@ end
 
 
 # 3) TEST:
-logger.debug( "Testing example plugin... (This requires the example MainContent plugin or equivalent functionality.)" )
-logger.debug( Plugins.inflate_page(
-  "not a command",
-  "debug.html",
-  {"main-content"=>"<p>This paragraph was injected into the template!</p>"},
-  "<html><body><div id='main-content'></div></body></html>",
-  logger
-))
+# logger.debug( "Testing example plugin... (This requires the example MainContent plugin or equivalent functionality.)" )
+# logger.debug( Plugins.inflate_page(
+#   "not a command",
+#   "debug.html",
+#   {"main-content"=>"<p>This paragraph was injected into the template!</p>"},
+#   "<html><body><div id='main-content'></div></body></html>",
+#   logger
+# ))
 
 
 
@@ -257,7 +257,7 @@ Dir.glob( File.join( config[:input_dir], "**/*" ), File::FNM_DOTMATCH ) do | inp
   elsif input_path.end_with?( INPUT_FILENAME_EXTENSION )
 
     # Modify the extension of the relative and output paths
-    # e.g. .page.brute -> .html
+    # e.g. .page.toml -> .html
     relative_path =
       relative_path.delete_suffix( INPUT_FILENAME_EXTENSION ) + OUTPUT_FILENAME_EXTENSION
     output_path =
